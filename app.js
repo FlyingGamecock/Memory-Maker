@@ -2,8 +2,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const baseStorageKey = "launchpad-ideas-v2";
 const basePendingDeletesKey = "launchpad-pending-deletes-v2";
-const supabaseUrl = "https://ovqksdgfmyxwpjwrhbcr.supabase.co";
-const supabaseKey = "sb_publishable_fpMh8zZ--K3G215ykdzTbA_qZoge-SS";
+const supabaseUrl = "https://gzkhdcuaioyyybbedppq.supabase.co";
+const supabaseKey = "sb_publishable_pBh31jbSpdlOWlacL-qSLw_4w3icQbK";
 const photoBucket = "idea-photos";
 const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
