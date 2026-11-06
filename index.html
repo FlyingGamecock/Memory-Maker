@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#1e5aa8">
+    <meta name="description" content="A small offline-ready progressive web app for planning app ideas.">
+    <title>Memory Maker</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#ideaForm">Skip to app ideas</a>
+    <main class="app-shell">
+      <section class="workspace" aria-labelledby="app-title">
+        <header class="topbar">
+          <div class="brand-lockup">
+            <img src="assets/icon.svg" alt="" width="44" height="44">
+            <div>
+              <p class="eyebrow">Offline-ready</p>
+              <h1 id="app-title">Memory Maker</h1>
+            </div>
+          </div>
+          <button class="install-button" id="installButton" type="button" hidden>Install</button>
+        </header>
+
+        <section class="auth-panel" aria-label="Account">
+          <form class="auth-form" id="authForm">
+            <div>
+              <label for="emailInput">Email</label>
+              <input id="emailInput" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div>
+              <label for="passwordInput">Password</label>
+              <input id="passwordInput" name="password" type="password" autocomplete="current-password" minlength="6" required>
+            </div>
+            <div class="auth-actions">
+              <button id="signInButton" type="button">Sign in</button>
+              <button id="signUpButton" class="secondary-button" type="button">Sign up</button>
+              <button id="googleSignInButton" class="secondary-button" type="button">Google</button>
+            </div>
+          </form>
+          <div class="profile-panel" id="profilePanel" hidden>
+            <p id="userEmail"></p>
+            <button class="text-button" id="signOutButton" type="button">Sign out</button>
+          </div>
+          <p class="auth-message" id="authMessage" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="summary-grid" aria-label="Project summary">
+          <article class="metric">
+            <span id="totalCount">0</span>
+            <p>Total ideas</p>
+          </article>
+          <article class="metric">
+            <span id="readyCount">0</span>
+            <p>Ready to build</p>
+          </article>
+          <article class="metric status-card">
+            <span id="offlineStatus" role="status" aria-live="polite">Online</span>
+            <p>Network status</p>
+          </article>
+        </section>
+
+        <form class="idea-form" id="ideaForm">
+          <div class="form-heading">
+            <h2>Add idea</h2>
+          </div>
+          <div class="idea-form-grid">
+            <div class="field title-field">
+              <label for="ideaInput">Idea title</label>
+              <input id="ideaInput" name="idea" type="text" autocomplete="off" maxlength="80" placeholder="Habit tracker for night-shift nurses" required aria-describedby="ideaHelp">
+              <p id="ideaHelp" class="field-help">Required. 80 characters maximum.</p>
+            </div>
+            <div class="field">
+              <label for="categoryInput">Category</label>
+              <input id="categoryInput" name="category" type="text" autocomplete="off" maxlength="40" placeholder="General">
+            </div>
+            <div class="field">
+              <label for="dueDateInput">Due date</label>
+              <input id="dueDateInput" name="dueDate" type="date">
+            </div>
+            <div class="field notes-field">
+              <label for="notesInput">Notes</label>
+              <textarea id="notesInput" name="notes" maxlength="500" placeholder="Add useful details"></textarea>
+            </div>
+            <fieldset class="photo-controls">
+              <legend id="photosLabel">Photos</legend>
+              <div class="photo-action-row">
+                <button class="file-button" id="photoLibraryButton" type="button">Select photos</button>
+                <input id="photoLibraryInput" class="visually-hidden" name="photoLibrary" type="file" accept="image/*" multiple aria-label="Select photos from this device">
+                <button class="file-button" id="photoCameraButton" type="button">Use camera</button>
+                <input id="photoCameraInput" class="visually-hidden" name="photoCamera" type="file" accept="image/*" capture="environment" aria-label="Take a photo with the camera">
+                <div class="resize-control">
+                  <label for="photoSizeInput">Max width</label>
+                  <select id="photoSizeInput" name="photoSize">
+                    <option value="800">800 px</option>
+                    <option value="1200" selected>1200 px</option>
+                    <option value="1600">1600 px</option>
+                  </select>
+                </div>
+              </div>
+              <ul class="photo-preview-list" id="photoPreviewList" aria-live="polite"></ul>
+            </fieldset>
+            <button type="submit">Add</button>
+          </div>
+        </form>
+
+        <section class="board" aria-label="App ideas">
+          <div class="board-header">
+            <h2>Build Queue</h2>
+            <button class="text-button" id="clearDone" type="button">Clear ready</button>
+          </div>
+          <ul class="idea-list" id="ideaList"></ul>
+          <p class="empty-state" id="emptyState" aria-live="polite">Add the first idea and this PWA will keep it here, even after refresh or while offline.</p>
+        </section>
+
+        <section class="board community-board" aria-labelledby="communityTitle">
+          <div class="board-header">
+            <h2 id="communityTitle">Community ideas</h2>
+          </div>
+          <p class="community-description">Ideas shared here are visible to anyone who can access Memory Maker.</p>
+          <ul class="idea-list" id="communityList"></ul>
+          <p class="empty-state" id="communityEmptyState" aria-live="polite">No ideas have been shared yet.</p>
+        </section>
+      </section>
+    </main>
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
