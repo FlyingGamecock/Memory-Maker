@@ -15,8 +15,6 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 
 const ideaForm = document.querySelector("#ideaForm");
 const ideaInput = document.querySelector("#ideaInput");
-const categoryInput = document.querySelector("#categoryInput");
-const dueDateInput = document.querySelector("#dueDateInput");
 const notesInput = document.querySelector("#notesInput");
 const photoLibraryInput = document.querySelector("#photoLibraryInput");
 const photoCameraInput = document.querySelector("#photoCameraInput");
@@ -81,8 +79,6 @@ function normalizeIdea(row) {
     user_id: row.user_id || user?.id,
     text: row.text,
     notes: row.notes || "",
-    category: row.category || "General",
-    due_date: row.due_date || "",
     done: Boolean(row.done),
     is_public: Boolean(row.is_public),
     photos: Array.isArray(row.idea_photos) ? row.idea_photos.map(normalizePhoto) : Array.isArray(row.photos) ? row.photos.map(normalizePhoto) : [],
@@ -149,18 +145,6 @@ function isSetupMissing(error) {
 
 function showPhotoSetupMessage() {
   setAuthMessage("Photo storage is not set up yet. Run the updated Supabase SQL, then refresh.");
-}
-
-function formatDueDate(value) {
-  if (!value) return "";
-
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric"
-  }).format(date);
 }
 
 function addSelectedFiles(fileList) {
@@ -321,8 +305,6 @@ function renderAuth() {
   profilePanel.hidden = !signedIn;
   userEmail.textContent = signedIn ? user.email : "";
   ideaInput.disabled = !signedIn;
-  categoryInput.disabled = !signedIn;
-  dueDateInput.disabled = !signedIn;
   notesInput.disabled = !signedIn;
   photoLibraryInput.disabled = !signedIn;
   photoCameraInput.disabled = !signedIn;
@@ -376,24 +358,14 @@ function renderIdeaList(list, entries, readOnly) {
     const meta = document.createElement("div");
     meta.className = "idea-meta";
 
-    const category = document.createElement("span");
-    category.textContent = idea.category || "General";
-    meta.append(category);
-
     if (readOnly && idea.done) {
       const ready = document.createElement("span");
       ready.textContent = "Ready to build";
       meta.append(ready);
     }
 
-    if (idea.due_date) {
-      const dueDate = document.createElement("time");
-      dueDate.dateTime = idea.due_date;
-      dueDate.textContent = `Due ${formatDueDate(idea.due_date)}`;
-      meta.append(dueDate);
-    }
-
-    content.append(title, meta);
+    content.append(title);
+    if (meta.childElementCount) content.append(meta);
 
     if (!readOnly) {
       const shareLabel = document.createElement("label");
@@ -518,7 +490,7 @@ async function loadCloudIdeas() {
 
     let { data, error } = await supabase
       .from("ideas")
-      .select("id,user_id,text,notes,category,due_date,done,is_public,updated_at,idea_photos(id,idea_id,user_id,storage_path,width,height,size_bytes,created_at)")
+      .select("id,user_id,text,notes,done,is_public,updated_at,idea_photos(id,idea_id,user_id,storage_path,width,height,size_bytes,created_at)")
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false });
 
@@ -526,7 +498,7 @@ async function loadCloudIdeas() {
       showPhotoSetupMessage();
       ({ data, error } = await supabase
         .from("ideas")
-        .select("id,user_id,text,notes,category,due_date,done,is_public,updated_at")
+        .select("id,user_id,text,notes,done,is_public,updated_at")
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false }));
     }
@@ -557,7 +529,7 @@ async function loadCommunityIdeas() {
   try {
     const { data, error } = await supabase
       .from("ideas")
-      .select("id,text,notes,category,due_date,done,is_public,updated_at,idea_photos(id,idea_id,storage_path,width,height,size_bytes,created_at)")
+      .select("id,text,notes,done,is_public,updated_at,idea_photos(id,idea_id,storage_path,width,height,size_bytes,created_at)")
       .eq("is_public", true)
       .order("updated_at", { ascending: false });
 
@@ -606,8 +578,6 @@ async function syncIdea(idea) {
           user_id: user.id,
           text: idea.text,
           notes: idea.notes,
-          category: idea.category,
-          due_date: idea.due_date || null,
           done: idea.done,
           is_public: Boolean(idea.is_public),
           updated_at: idea.updated_at
@@ -729,8 +699,6 @@ ideaForm.addEventListener("submit", async (event) => {
   }
 
   const text = ideaInput.value.trim();
-  const category = categoryInput.value.trim() || "General";
-  const dueDate = dueDateInput.value;
   const notes = notesInput.value.trim();
   const photoFiles = [...selectedPhotoFiles];
   if (!text) return;
@@ -740,8 +708,6 @@ ideaForm.addEventListener("submit", async (event) => {
     user_id: user.id,
     text,
     notes,
-    category,
-    due_date: dueDate,
     photos: [],
     done: false,
     updated_at: new Date().toISOString(),
@@ -754,8 +720,6 @@ ideaForm.addEventListener("submit", async (event) => {
   await syncIdea(idea);
   await uploadPhotosForIdea(idea, photoFiles);
   ideaInput.value = "";
-  categoryInput.value = "";
-  dueDateInput.value = "";
   notesInput.value = "";
   selectedPhotoFiles = [];
   renderSelectedPhotoPreviews();

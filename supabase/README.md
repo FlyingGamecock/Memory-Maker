@@ -44,8 +44,10 @@ After bootstrap, pushes to `main` that change `supabase/migrations/` run
 `supabase db push --linked`. You can also start the workflow manually from the
 GitHub Actions tab.
 
-The root `supabase-schema.sql` is retained as the original setup script;
-future database changes should be made in timestamped migration files.
+The root `supabase-schema.sql` describes the current setup schema; future
+database changes should be made in timestamped migration files. The
+category/due-date removal migration also deletes those values from existing
+ideas.
 
 ## Public idea sharing
 
@@ -60,7 +62,7 @@ supabase db push --linked
 Only ideas explicitly marked public are visible to anonymous or authenticated
 visitors. Database policies permit visitors to read shared ideas and their
 photos, but only the owner can change or delete an idea. Treat shared idea
-titles, notes, due dates, status, and photos as public information.
+titles, notes, status, and photos as public information.
 
 ## Google sign-in redirects
 

@@ -279,7 +279,7 @@ h2 {
 
 .idea-form-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(140px, 180px) minmax(140px, 170px) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: start;
 }
@@ -317,11 +317,11 @@ h2 {
 }
 
 .notes-field {
-  grid-column: 1 / 4;
+  grid-column: 1 / -1;
 }
 
 .photo-controls {
-  grid-column: 1 / 4;
+  grid-column: 1 / -1;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -392,6 +392,8 @@ h2 {
 }
 
 .idea-form-grid button {
+  grid-column: 2;
+  justify-self: end;
   align-self: end;
   min-height: 48px;
 }
