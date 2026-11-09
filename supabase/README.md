@@ -61,3 +61,27 @@ Only ideas explicitly marked public are visible to anonymous or authenticated
 visitors. Database policies permit visitors to read shared ideas and their
 photos, but only the owner can change or delete an idea. Treat shared idea
 titles, notes, due dates, status, and photos as public information.
+
+## Google sign-in redirects
+
+The app sends Google sign-in back to the URL where it was opened. In the
+Supabase Dashboard, open **Authentication → URL Configuration** and set:
+
+- **Site URL** to `https://flyinggamecock.github.io/Memory-Maker/`.
+- **Redirect URLs** to include
+  `https://flyinggamecock.github.io/Memory-Maker/**`.
+
+If testing locally, keep the local web server running while signing in and add
+its exact origin and path to **Redirect URLs** (for example,
+`http://localhost:8000/**`). Use the port your server actually reports.
+
+In **Authentication → Providers → Google**, make sure Google is enabled. In
+the Google OAuth client configuration, the authorized redirect URI must be
+the Supabase callback URL:
+`https://gzkhdcuaioyyybbedppq.supabase.co/auth/v1/callback`. This is not the
+app's localhost or GitHub Pages URL.
+
+If sign-in ends at `localhost` while using the deployed site, check that the
+deployed URL is in Supabase's **Redirect URLs** list and that **Site URL** is
+not set to localhost. Supabase may use **Site URL** when the requested return
+URL is not allowed.
