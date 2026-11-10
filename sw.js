@@ -1,4 +1,4 @@
-const cacheName = "memory-maker-pwa-v2";
+const cacheName = "memory-maker-pwa-v4";
 const appShell = [
   "./",
   "./index.html",
@@ -37,6 +37,10 @@ self.addEventListener("fetch", (event) => {
         caches.open(cacheName).then((cache) => cache.put(event.request, copy));
         return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() =>
+        caches.match(event.request).then((response) =>
+          response || caches.match(event.request, { ignoreSearch: true })
+        )
+      )
   );
 });

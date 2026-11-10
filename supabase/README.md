@@ -59,10 +59,40 @@ objects and paths continue to work.
 
 The migration `20261106150000_public_idea_sharing.sql` adds the `is_public`
 field and read-only policies for the community directory. Only memories
-explicitly marked public are visible to anonymous or authenticated visitors.
-Database policies permit visitors to read shared memories and their photos,
-but only the owner can change or delete a memory. Treat shared memory titles,
-notes, and photos as public information.
+explicitly marked public are visible to anonymous or authenticated visitors,
+including their owners. Treat shared memory titles, notes, and photos as
+public information.
+
+The migration `20261110161500_admin_access.sql` adds database-enforced admin
+roles, admin-only account management, and policies granting admins edit and
+delete access to all memories and photos. It does not grant an initial admin
+automatically. After applying migrations, run this once in the Supabase SQL
+Editor, replacing the email with the existing account that should be the first
+admin:
+
+```sql
+do $$
+declare
+  initial_admin_id uuid;
+begin
+  select id into initial_admin_id
+  from auth.users
+  where lower(email) = lower('existing-account-email');
+
+  if initial_admin_id is null then
+    raise exception 'No Supabase user found for the supplied email';
+  end if;
+
+  insert into public.user_roles (user_id, is_admin)
+  values (initial_admin_id, true)
+  on conflict (user_id) do update set is_admin = true;
+end;
+$$;
+```
+
+After that, admins can grant or revoke admin access from the Admin page.
+Database functions reject non-admin role changes and prevent removing the last
+administrator.
 
 ```powershell
 supabase db push --linked

@@ -117,6 +117,65 @@ select:focus-visible {
   margin-bottom: 22px;
 }
 
+.topbar-actions,
+.primary-navigation,
+.memory-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.primary-navigation {
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.primary-navigation a {
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--accent);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.primary-navigation a:hover,
+.primary-navigation a[aria-current="page"] {
+  background: rgba(21, 71, 52, 0.1);
+}
+
+.primary-navigation a[hidden] {
+  display: none;
+}
+
+.page-view[hidden],
+.profile-panel[hidden] {
+  display: none;
+}
+
+.page-heading {
+  margin-bottom: 20px;
+}
+
+.page-heading h2 {
+  margin-bottom: 8px;
+  font-size: 1.35rem;
+}
+
+.page-heading p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.navigation-message:empty {
+  display: none;
+}
+
+.navigation-message {
+  margin: -12px 0 16px;
+  color: var(--accent-2);
+}
+
 .brand-lockup {
   min-width: 0;
   display: flex;
@@ -181,21 +240,21 @@ h2 {
   background: rgba(21, 71, 52, 0.1);
 }
 
-.auth-panel {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 22px;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
+.memory-form .secondary-button {
+  color: var(--accent);
+  background: rgba(21, 71, 52, 0.1);
 }
 
 .auth-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  gap: 10px;
+  max-width: 720px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
   align-items: end;
+}
+
+.auth-form > .auth-actions {
+  grid-column: 1 / -1;
 }
 
 .auth-form label {
@@ -237,7 +296,7 @@ h2 {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 22px;
 }
@@ -392,10 +451,12 @@ h2 {
 }
 
 .memory-form-grid button {
-  grid-column: 2;
-  justify-self: end;
-  align-self: end;
   min-height: 48px;
+}
+
+.memory-form-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
 }
 
 .memory-form-grid input:focus,
@@ -459,10 +520,6 @@ h2 {
   margin: 0;
 }
 
-.community-board {
-  margin-top: 28px;
-}
-
 .community-description {
   margin: -2px 0 12px;
   color: var(--muted);
@@ -492,6 +549,65 @@ h2 {
   overflow-wrap: anywhere;
 }
 
+.memory-owner {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-section {
+  margin-top: 24px;
+}
+
+.admin-section h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.admin-user-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-user-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-user-item > span:first-child {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.admin-user-status {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.admin-role-button {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--accent);
+  background: rgba(21, 71, 52, 0.1);
+  font-weight: 800;
+}
+
+.admin-section > .memory-list {
+  margin-top: 8px;
+}
+
 .photo-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
@@ -513,7 +629,59 @@ h2 {
   background: var(--paper);
 }
 
-.photo-card button {
+.photo-thumbnail {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.photo-thumbnail:focus-visible {
+  outline-offset: 4px;
+}
+
+.photo-lightbox {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 56px 18px 18px;
+  border: 0;
+  place-items: center;
+  background: rgba(12, 16, 14, 0.96);
+}
+
+.photo-lightbox[open] {
+  display: grid;
+}
+
+.photo-lightbox::backdrop {
+  background: rgba(12, 16, 14, 0.88);
+}
+
+.photo-lightbox > img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.photo-lightbox-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.photo-card > .remove-photo-button {
   position: absolute;
   right: 4px;
   top: 4px;
@@ -544,6 +712,16 @@ h2 {
   background: var(--accent-2);
 }
 
+.edit-memory-button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--accent);
+  background: #fff;
+  font-weight: 800;
+}
+
 .empty-state {
   padding: 24px 0;
   line-height: 1.5;
@@ -567,9 +745,25 @@ h2 {
   .memory-form-grid,
   .auth-form,
   .auth-actions,
-  .profile-panel {
+  .profile-panel,
+  .topbar-actions,
+  .primary-navigation,
+  .memory-form-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .admin-user-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .primary-navigation {
+    gap: 4px;
+  }
+
+  .primary-navigation a {
+    padding: 10px 12px;
   }
 
   .auth-form {
@@ -578,6 +772,10 @@ h2 {
 
   .memory-form-grid {
     display: flex;
+  }
+
+  .memory-form-actions {
+    width: 100%;
   }
 
   .memory-form-grid textarea {

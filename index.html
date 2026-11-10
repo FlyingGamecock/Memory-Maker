@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <a class="skip-link" href="#memoryForm">Skip to memories</a>
+    <a class="skip-link" id="skipLink" href="#authForm">Skip to page content</a>
     <main class="app-shell">
       <section class="workspace" aria-labelledby="app-title">
         <header class="topbar">
@@ -23,10 +23,28 @@
               <h1 id="app-title">Memory Maker</h1>
             </div>
           </div>
-          <button class="install-button" id="installButton" type="button" hidden>Install</button>
+          <div class="topbar-actions">
+            <button class="install-button" id="installButton" type="button" hidden>Install</button>
+            <div class="profile-panel" id="profilePanel" hidden>
+              <p id="userEmail"></p>
+              <button class="text-button" id="signOutButton" type="button">Sign out</button>
+            </div>
+          </div>
         </header>
 
-        <section class="auth-panel" aria-label="Account">
+        <nav class="primary-navigation" aria-label="Main navigation">
+          <a href="?page=login" data-page-link="login">Sign in</a>
+          <a href="?page=memories" data-page-link="memories">My memories</a>
+          <a href="?page=community" data-page-link="community">Community</a>
+          <a href="?page=admin" data-page-link="admin" hidden>Admin</a>
+        </nav>
+        <p class="navigation-message" id="navigationMessage" role="status" aria-live="polite"></p>
+
+        <section class="page-view" id="loginPage" data-page-view="login" aria-labelledby="loginTitle">
+          <div class="page-heading">
+            <h2 id="loginTitle">Sign in to Memory Maker</h2>
+            <p>Sign in or create an account to save and manage your memories.</p>
+          </div>
           <form class="auth-form" id="authForm">
             <div>
               <label for="emailInput">Email</label>
@@ -42,78 +60,105 @@
               <button id="googleSignInButton" class="secondary-button" type="button">Google</button>
             </div>
           </form>
-          <div class="profile-panel" id="profilePanel" hidden>
-            <p id="userEmail"></p>
-            <button class="text-button" id="signOutButton" type="button">Sign out</button>
-          </div>
           <p class="auth-message" id="authMessage" role="status" aria-live="polite"></p>
         </section>
 
-        <section class="summary-grid" aria-label="Memory summary">
-          <article class="metric">
-            <span id="totalCount">0</span>
-            <p>Total memories</p>
-          </article>
-          <article class="metric status-card">
-            <span id="offlineStatus" role="status" aria-live="polite">Online</span>
-            <p>Network status</p>
-          </article>
-        </section>
-
-        <form class="memory-form" id="memoryForm">
-          <div class="form-heading">
-            <h2>Add memory</h2>
+        <section class="page-view" id="memoriesPage" data-page-view="memories" aria-labelledby="memoriesTitle" hidden>
+          <div class="page-heading">
+            <h2 id="memoriesTitle">My Memories</h2>
+            <p>Create, update, and organize your personal memories.</p>
           </div>
-          <div class="memory-form-grid">
-            <div class="field title-field">
-              <label for="memoryInput">Memory title</label>
-              <input id="memoryInput" name="memory" type="text" autocomplete="off" maxlength="80" placeholder="A favorite family trip" required aria-describedby="memoryHelp">
-              <p id="memoryHelp" class="field-help">Describe your memory (80 characters maximum).</p>
+          <section class="summary-grid" aria-label="Memory summary">
+            <article class="metric">
+              <span id="totalCount">0</span>
+              <p>Total memories</p>
+            </article>
+            <article class="metric status-card">
+              <span id="offlineStatus" role="status" aria-live="polite">Online</span>
+              <p>Network status</p>
+            </article>
+          </section>
+
+          <form class="memory-form" id="memoryForm">
+            <div class="form-heading">
+              <h2 id="memoryFormTitle">Add memory</h2>
             </div>
-            <div class="field notes-field">
-              <label for="notesInput">Notes</label>
-              <textarea id="notesInput" name="notes" maxlength="500" placeholder="Add useful details"></textarea>
-            </div>
-            <fieldset class="photo-controls">
-              <legend id="photosLabel">Photos</legend>
-              <div class="photo-action-row">
-                <button class="file-button" id="photoLibraryButton" type="button">Select photos</button>
-                <input id="photoLibraryInput" class="visually-hidden" name="photoLibrary" type="file" accept="image/*" multiple aria-label="Select photos from this device">
-                <button class="file-button" id="photoCameraButton" type="button">Use camera</button>
-                <input id="photoCameraInput" class="visually-hidden" name="photoCamera" type="file" accept="image/*" capture="environment" aria-label="Take a photo with the camera">
-                <div class="resize-control">
-                  <label for="photoSizeInput">Max width</label>
-                  <select id="photoSizeInput" name="photoSize">
-                    <option value="800">800 px</option>
-                    <option value="1200" selected>1200 px</option>
-                    <option value="1600">1600 px</option>
-                  </select>
-                </div>
+            <div class="memory-form-grid">
+              <div class="field title-field">
+                <label for="memoryInput">Memory title</label>
+                <input id="memoryInput" name="memory" type="text" autocomplete="off" maxlength="80" placeholder="A favorite family trip" required aria-describedby="memoryHelp">
+                <p id="memoryHelp" class="field-help">Describe your memory (80 characters maximum).</p>
               </div>
-              <ul class="photo-preview-list" id="photoPreviewList" aria-live="polite"></ul>
-            </fieldset>
-            <button type="submit">Add</button>
-          </div>
-        </form>
+              <div class="field notes-field">
+                <label for="notesInput">Notes</label>
+                <textarea id="notesInput" name="notes" maxlength="500" placeholder="Add useful details"></textarea>
+              </div>
+              <fieldset class="photo-controls">
+                <legend id="photosLabel">Photos</legend>
+                <div class="photo-action-row">
+                  <button class="file-button" id="photoLibraryButton" type="button">Select photos</button>
+                  <input id="photoLibraryInput" class="visually-hidden" name="photoLibrary" type="file" accept="image/*" multiple aria-label="Select photos from this device">
+                  <button class="file-button" id="photoCameraButton" type="button">Use camera</button>
+                  <input id="photoCameraInput" class="visually-hidden" name="photoCamera" type="file" accept="image/*" capture="environment" aria-label="Take a photo with the camera">
+                  <div class="resize-control">
+                    <label for="photoSizeInput">Max width</label>
+                    <select id="photoSizeInput" name="photoSize">
+                      <option value="800">800 px</option>
+                      <option value="1200" selected>1200 px</option>
+                      <option value="1600">1600 px</option>
+                    </select>
+                  </div>
+                </div>
+                <ul class="photo-preview-list" id="photoPreviewList" aria-live="polite"></ul>
+              </fieldset>
+              <div class="memory-form-actions">
+                <button id="memorySubmitButton" type="submit">Add</button>
+                <button class="secondary-button" id="cancelMemoryEditButton" type="button" hidden>Cancel edit</button>
+              </div>
+            </div>
+          </form>
 
-        <section class="board" aria-label="Memories">
-          <div class="board-header">
-            <h2>My Memories</h2>
-          </div>
-          <ul class="memory-list" id="memoryList"></ul>
-          <p class="empty-state" id="emptyState" aria-live="polite">Add the first memory and this PWA will keep it here, even after refresh or while offline.</p>
+          <section class="board" aria-label="Memories">
+            <div class="board-header">
+              <h2>Your memories</h2>
+            </div>
+            <ul class="memory-list" id="memoryList"></ul>
+            <p class="empty-state" id="emptyState" aria-live="polite">Add the first memory and this PWA will keep it here, even after refresh or while offline.</p>
+          </section>
         </section>
 
-        <section class="board community-board" aria-labelledby="communityTitle">
-          <div class="board-header">
+        <section class="page-view" id="communityPage" data-page-view="community" aria-labelledby="communityTitle" hidden>
+          <div class="page-heading">
             <h2 id="communityTitle">Community Memories</h2>
+            <p class="community-description">Memories shared here are visible to anyone who can access Memory Maker.</p>
           </div>
-          <p class="community-description">Memories shared here are visible to anyone who can access Memory Maker.</p>
           <ul class="memory-list" id="communityList"></ul>
           <p class="empty-state" id="communityEmptyState" aria-live="polite">No memories have been shared yet.</p>
         </section>
+
+        <section class="page-view" id="adminPage" data-page-view="admin" aria-labelledby="adminTitle" hidden>
+          <div class="page-heading">
+            <h2 id="adminTitle">Admin</h2>
+            <p>Manage administrator access and memories across all accounts.</p>
+          </div>
+          <p class="auth-message" id="adminMessage" role="status" aria-live="polite"></p>
+          <section class="admin-section" aria-labelledby="adminUsersTitle">
+            <h3 id="adminUsersTitle">User access</h3>
+            <ul class="admin-user-list" id="adminUserList"></ul>
+            <p class="empty-state" id="adminUsersEmpty" hidden>No accounts found.</p>
+          </section>
+          <section class="admin-section" aria-labelledby="adminMemoriesTitle">
+            <h3 id="adminMemoriesTitle">All memories</h3>
+            <ul class="memory-list" id="adminMemoryList"></ul>
+            <p class="empty-state" id="adminMemoriesEmpty" hidden>No memories found.</p>
+          </section>
+        </section>
       </section>
     </main>
+    <dialog class="photo-lightbox" id="photoLightbox" aria-label="Photo viewer">
+      <button class="photo-lightbox-close" id="photoLightboxClose" type="button" aria-label="Close photo">×</button>
+      <img id="photoLightboxImage" alt="">
+    </dialog>
     <script src="app.js" type="module"></script>
   </body>
 </html>
