@@ -1,10 +1,12 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-const baseStorageKey = "launchpad-ideas-v2";
-const basePendingDeletesKey = "launchpad-pending-deletes-v2";
+const baseStorageKey = "launchpad-memories-v3";
+const legacyStorageKey = "launchpad-ideas-v2";
+const basePendingDeletesKey = "launchpad-pending-memory-deletes-v3";
+const legacyPendingDeletesKey = "launchpad-pending-deletes-v2";
 const supabaseUrl = "https://gzkhdcuaioyyybbedppq.supabase.co";
 const supabaseKey = "sb_publishable_pBh31jbSpdlOWlacL-qSLw_4w3icQbK";
-const photoBucket = "idea-photos";
+const legacyPhotoBucket = "idea-photos";
 const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: true,
@@ -13,8 +15,8 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
   }
 });
 
-const ideaForm = document.querySelector("#ideaForm");
-const ideaInput = document.querySelector("#ideaInput");
+const memoryForm = document.querySelector("#memoryForm");
+const memoryInput = document.querySelector("#memoryInput");
 const notesInput = document.querySelector("#notesInput");
 const photoLibraryInput = document.querySelector("#photoLibraryInput");
 const photoCameraInput = document.querySelector("#photoCameraInput");
@@ -22,14 +24,12 @@ const photoLibraryButton = document.querySelector("#photoLibraryButton");
 const photoCameraButton = document.querySelector("#photoCameraButton");
 const photoSizeInput = document.querySelector("#photoSizeInput");
 const photoPreviewList = document.querySelector("#photoPreviewList");
-const ideaList = document.querySelector("#ideaList");
+const memoryList = document.querySelector("#memoryList");
 const emptyState = document.querySelector("#emptyState");
 const communityList = document.querySelector("#communityList");
 const communityEmptyState = document.querySelector("#communityEmptyState");
 const totalCount = document.querySelector("#totalCount");
-const readyCount = document.querySelector("#readyCount");
 const offlineStatus = document.querySelector("#offlineStatus");
-const clearDone = document.querySelector("#clearDone");
 const installButton = document.querySelector("#installButton");
 const authForm = document.querySelector("#authForm");
 const emailInput = document.querySelector("#emailInput");
@@ -45,8 +45,8 @@ const authMessage = document.querySelector("#authMessage");
 let deferredInstallPrompt = null;
 let session = null;
 let user = null;
-let ideas = [];
-let communityIdeas = [];
+let memories = [];
+let communityMemories = [];
 let pendingDeletes = [];
 let isSyncing = false;
 let selectedPhotoFiles = [];
@@ -55,14 +55,22 @@ function userStorageKey() {
   return `${baseStorageKey}-${user.id}`;
 }
 
+function legacyUserStorageKey() {
+  return `${legacyStorageKey}-${user.id}`;
+}
+
 function userPendingDeletesKey() {
   return `${basePendingDeletesKey}-${user.id}`;
+}
+
+function legacyUserPendingDeletesKey() {
+  return `${legacyPendingDeletesKey}-${user.id}`;
 }
 
 function normalizePhoto(row) {
   return {
     id: row.id,
-    idea_id: row.idea_id,
+    memory_id: row.memory_id || row.idea_id,
     user_id: row.user_id || user?.id,
     storage_path: row.storage_path,
     width: row.width,
@@ -73,41 +81,50 @@ function normalizePhoto(row) {
   };
 }
 
-function normalizeIdea(row) {
+function normalizeMemory(row) {
   return {
     id: row.id,
     user_id: row.user_id || user?.id,
     text: row.text,
     notes: row.notes || "",
-    done: Boolean(row.done),
     is_public: Boolean(row.is_public),
-    photos: Array.isArray(row.idea_photos) ? row.idea_photos.map(normalizePhoto) : Array.isArray(row.photos) ? row.photos.map(normalizePhoto) : [],
+    photos: Array.isArray(row.memory_photos)
+      ? row.memory_photos.map(normalizePhoto)
+      : Array.isArray(row.idea_photos)
+        ? row.idea_photos.map(normalizePhoto)
+        : Array.isArray(row.photos)
+          ? row.photos.map(normalizePhoto)
+          : [],
     updated_at: row.updated_at || new Date().toISOString(),
     pending: Boolean(row.pending)
   };
 }
 
-function loadIdeas() {
+function loadMemories() {
   if (!user) return [];
 
   try {
-    const saved = JSON.parse(localStorage.getItem(userStorageKey()));
-    return Array.isArray(saved) ? saved.map(normalizeIdea) : [];
+    const saved = JSON.parse(
+      localStorage.getItem(userStorageKey()) || localStorage.getItem(legacyUserStorageKey())
+    );
+    return Array.isArray(saved) ? saved.map(normalizeMemory) : [];
   } catch {
     return [];
   }
 }
 
-function saveIdeas() {
+function saveMemories() {
   if (!user) return;
-  localStorage.setItem(userStorageKey(), JSON.stringify(ideas));
+  localStorage.setItem(userStorageKey(), JSON.stringify(memories));
 }
 
 function loadPendingDeletes() {
   if (!user) return [];
 
   try {
-    const saved = JSON.parse(localStorage.getItem(userPendingDeletesKey()));
+    const saved = JSON.parse(
+      localStorage.getItem(userPendingDeletesKey()) || localStorage.getItem(legacyUserPendingDeletesKey())
+    );
     return Array.isArray(saved) ? saved : [];
   } catch {
     return [];
@@ -119,7 +136,7 @@ function savePendingDeletes() {
   localStorage.setItem(userPendingDeletesKey(), JSON.stringify(pendingDeletes));
 }
 
-function sortIdeas(entries) {
+function sortMemories(entries) {
   return entries.sort((a, b) => String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
 }
 
@@ -207,12 +224,12 @@ async function resizeImage(file) {
 }
 
 async function hydratePhotoUrls(entries) {
-  const photos = entries.flatMap((idea) => idea.photos || []);
+  const photos = entries.flatMap((memory) => memory.photos || []);
 
   await Promise.all(
     photos.map(async (photo) => {
       if (!photo.storage_path) return;
-      const { data, error } = await supabase.storage.from(photoBucket).createSignedUrl(photo.storage_path, 3600);
+      const { data, error } = await supabase.storage.from(legacyPhotoBucket).createSignedUrl(photo.storage_path, 3600);
       if (error) {
         if (isSetupMissing(error)) showPhotoSetupMessage();
         return;
@@ -224,7 +241,7 @@ async function hydratePhotoUrls(entries) {
   return entries;
 }
 
-async function uploadPhotosForIdea(idea, files) {
+async function uploadPhotosForMemory(memory, files) {
   if (!user || !navigator.onLine || files.length === 0) return;
 
   updateNetworkStatus("Uploading");
@@ -233,9 +250,9 @@ async function uploadPhotosForIdea(idea, files) {
     try {
       const resized = await resizeImage(file);
       const photoId = crypto.randomUUID();
-      const storagePath = `${user.id}/${idea.id}/${photoId}.jpg`;
+      const storagePath = `${user.id}/${memory.id}/${photoId}.jpg`;
 
-      const { error: uploadError } = await supabase.storage.from(photoBucket).upload(storagePath, resized.blob, {
+      const { error: uploadError } = await supabase.storage.from(legacyPhotoBucket).upload(storagePath, resized.blob, {
         contentType: "image/jpeg",
         upsert: false
       });
@@ -243,24 +260,24 @@ async function uploadPhotosForIdea(idea, files) {
       if (uploadError) throw uploadError;
 
       const { data, error } = await supabase
-        .from("idea_photos")
+        .from("memory_photos")
         .insert({
           id: photoId,
-          idea_id: idea.id,
+          memory_id: memory.id,
           user_id: user.id,
           storage_path: storagePath,
           width: resized.width,
           height: resized.height,
           size_bytes: resized.size_bytes
         })
-        .select("id,idea_id,user_id,storage_path,width,height,size_bytes,created_at")
+        .select("id,memory_id,user_id,storage_path,width,height,size_bytes,created_at")
         .single();
 
       if (error) throw error;
 
       const [photo] = await hydratePhotoUrls([{ photos: [normalizePhoto(data)] }]).then((items) => items[0].photos);
-      idea.photos = [...(idea.photos || []), photo];
-      saveIdeas();
+      memory.photos = [...(memory.photos || []), photo];
+      saveMemories();
       render();
     } catch (error) {
       console.warn(error);
@@ -276,20 +293,20 @@ async function uploadPhotosForIdea(idea, files) {
   updateNetworkStatus("Synced");
 }
 
-async function removePhoto(ideaId, photoId) {
-  const idea = ideas.find((entry) => entry.id === ideaId);
-  const photo = idea?.photos.find((entry) => entry.id === photoId);
-  if (!idea || !photo || !user) return;
+async function removePhoto(memoryId, photoId) {
+  const memory = memories.find((entry) => entry.id === memoryId);
+  const photo = memory?.photos.find((entry) => entry.id === photoId);
+  if (!memory || !photo || !user) return;
 
   try {
-    const { error: storageError } = await supabase.storage.from(photoBucket).remove([photo.storage_path]);
+    const { error: storageError } = await supabase.storage.from(legacyPhotoBucket).remove([photo.storage_path]);
     if (storageError) throw storageError;
 
-    const { error: rowError } = await supabase.from("idea_photos").delete().eq("id", photoId).eq("user_id", user.id);
+    const { error: rowError } = await supabase.from("memory_photos").delete().eq("id", photoId).eq("user_id", user.id);
     if (rowError) throw rowError;
 
-    idea.photos = idea.photos.filter((entry) => entry.id !== photoId);
-    saveIdeas();
+    memory.photos = memory.photos.filter((entry) => entry.id !== photoId);
+    saveMemories();
     render();
     updateNetworkStatus("Synced");
   } catch (error) {
@@ -304,68 +321,46 @@ function renderAuth() {
   authForm.hidden = signedIn;
   profilePanel.hidden = !signedIn;
   userEmail.textContent = signedIn ? user.email : "";
-  ideaInput.disabled = !signedIn;
+  memoryInput.disabled = !signedIn;
   notesInput.disabled = !signedIn;
   photoLibraryInput.disabled = !signedIn;
   photoCameraInput.disabled = !signedIn;
   photoLibraryButton.disabled = !signedIn;
   photoCameraButton.disabled = !signedIn;
   photoSizeInput.disabled = !signedIn;
-  ideaForm.querySelector("button").disabled = !signedIn;
-  clearDone.disabled = !signedIn;
+  memoryForm.querySelector('button[type="submit"]').disabled = !signedIn;
   emptyState.textContent = signedIn
-    ? "Add the first idea and this PWA will keep it here, even after refresh or while offline."
-    : "Sign in to load your private build queue.";
+    ? "Add the first memory and this PWA will keep it here, even after refresh or while offline."
+    : "Sign in to load your memories.";
 }
 
 function render() {
-  totalCount.textContent = ideas.length;
-  readyCount.textContent = ideas.filter((idea) => idea.done).length;
-  emptyState.hidden = ideas.length > 0;
-  renderIdeaList(ideaList, ideas, false);
-  renderIdeaList(communityList, communityIdeas, true);
-  communityEmptyState.hidden = communityIdeas.length > 0;
+  totalCount.textContent = memories.length;
+  emptyState.hidden = memories.length > 0;
+  renderMemoryList(memoryList, memories, false);
+  renderMemoryList(communityList, communityMemories, true);
+  communityEmptyState.hidden = communityMemories.length > 0;
 }
 
-function renderIdeaList(list, entries, readOnly) {
+function renderMemoryList(list, entries, readOnly) {
   list.innerHTML = "";
 
-  for (const idea of entries) {
+  for (const memory of entries) {
     const item = document.createElement("li");
-    item.className = `idea-item${idea.done ? " done" : ""}${readOnly ? " read-only" : ""}`;
-    item.dataset.id = idea.id;
+    item.className = `memory-item${readOnly ? " read-only" : ""}`;
+    item.dataset.id = memory.id;
 
     const main = document.createElement("div");
-    main.className = "idea-main";
+    main.className = "memory-main";
 
     const content = document.createElement("div");
-    content.className = "idea-content";
-
-    if (!readOnly) {
-      const label = document.createElement("label");
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.checked = idea.done;
-      checkbox.setAttribute("aria-label", `Mark ${idea.text} as ready`);
-      label.append(checkbox);
-      main.append(label);
-    }
+    content.className = "memory-content";
 
     const title = document.createElement("span");
-    title.className = "idea-title";
-    title.textContent = idea.text;
-
-    const meta = document.createElement("div");
-    meta.className = "idea-meta";
-
-    if (readOnly && idea.done) {
-      const ready = document.createElement("span");
-      ready.textContent = "Ready to build";
-      meta.append(ready);
-    }
+    title.className = "memory-title";
+    title.textContent = memory.text;
 
     content.append(title);
-    if (meta.childElementCount) content.append(meta);
 
     if (!readOnly) {
       const shareLabel = document.createElement("label");
@@ -374,23 +369,23 @@ function renderIdeaList(list, entries, readOnly) {
       const shareToggle = document.createElement("input");
       shareToggle.type = "checkbox";
       shareToggle.className = "share-toggle";
-      shareToggle.checked = idea.is_public;
-      shareToggle.setAttribute("aria-label", `${idea.is_public ? "Stop sharing" : "Share"} ${idea.text} with the community`);
+      shareToggle.checked = memory.is_public;
+      shareToggle.setAttribute("aria-label", `${memory.is_public ? "Stop sharing" : "Share"} ${memory.text} with the community`);
 
       const shareText = document.createElement("span");
-      shareText.textContent = idea.is_public ? "Shared with community" : "Share with community";
+      shareText.textContent = memory.is_public ? "Shared with community" : "Share with community";
       shareLabel.append(shareToggle, shareText);
       content.append(shareLabel);
     }
 
-    if (idea.notes) {
+    if (memory.notes) {
       const notes = document.createElement("p");
-      notes.className = "idea-notes";
-      notes.textContent = idea.notes;
+      notes.className = "memory-notes";
+      notes.textContent = memory.notes;
       content.append(notes);
     }
 
-    const visiblePhotos = idea.photos.filter((photo) => photo.signed_url);
+    const visiblePhotos = memory.photos.filter((photo) => photo.signed_url);
     if (visiblePhotos.length > 0) {
       const photoGrid = document.createElement("div");
       photoGrid.className = "photo-grid";
@@ -401,7 +396,7 @@ function renderIdeaList(list, entries, readOnly) {
 
         const image = document.createElement("img");
         image.src = photo.signed_url;
-        image.alt = `Photo attached to ${idea.text}`;
+        image.alt = `Photo attached to ${memory.text}`;
         image.loading = "lazy";
 
         card.append(image);
@@ -410,9 +405,9 @@ function renderIdeaList(list, entries, readOnly) {
           removePhotoButton.type = "button";
           removePhotoButton.className = "remove-photo-button";
           removePhotoButton.dataset.photoId = photo.id;
-          removePhotoButton.dataset.ideaId = idea.id;
+          removePhotoButton.dataset.memoryId = memory.id;
           removePhotoButton.textContent = "X";
-          removePhotoButton.setAttribute("aria-label", `Remove photo from ${idea.text}`);
+          removePhotoButton.setAttribute("aria-label", `Remove photo from ${memory.text}`);
           card.append(removePhotoButton);
         }
         photoGrid.append(card);
@@ -423,39 +418,39 @@ function renderIdeaList(list, entries, readOnly) {
 
     if (!readOnly) {
       const photoActions = document.createElement("div");
-      photoActions.className = "idea-photo-actions";
-      const libraryId = `library-${idea.id}`;
-      const cameraId = `camera-${idea.id}`;
+      photoActions.className = "memory-photo-actions";
+      const libraryId = `library-${memory.id}`;
+      const cameraId = `camera-${memory.id}`;
 
       const addPhotosButton = document.createElement("button");
-      addPhotosButton.className = "file-button idea-photo-trigger";
+      addPhotosButton.className = "file-button memory-photo-trigger";
       addPhotosButton.type = "button";
       addPhotosButton.dataset.target = libraryId;
       addPhotosButton.textContent = "Add photos";
 
       const addPhotosInput = document.createElement("input");
       addPhotosInput.id = libraryId;
-      addPhotosInput.className = "visually-hidden idea-photo-input";
+      addPhotosInput.className = "visually-hidden memory-photo-input";
       addPhotosInput.type = "file";
       addPhotosInput.accept = "image/*";
       addPhotosInput.multiple = true;
-      addPhotosInput.dataset.ideaId = idea.id;
-      addPhotosInput.setAttribute("aria-label", `Add photos to ${idea.text}`);
+      addPhotosInput.dataset.memoryId = memory.id;
+      addPhotosInput.setAttribute("aria-label", `Add photos to ${memory.text}`);
 
       const cameraButton = document.createElement("button");
-      cameraButton.className = "file-button idea-photo-trigger";
+      cameraButton.className = "file-button memory-photo-trigger";
       cameraButton.type = "button";
       cameraButton.dataset.target = cameraId;
       cameraButton.textContent = "Camera";
 
       const cameraInput = document.createElement("input");
       cameraInput.id = cameraId;
-      cameraInput.className = "visually-hidden idea-photo-input";
+      cameraInput.className = "visually-hidden memory-photo-input";
       cameraInput.type = "file";
       cameraInput.accept = "image/*";
       cameraInput.capture = "environment";
-      cameraInput.dataset.ideaId = idea.id;
-      cameraInput.setAttribute("aria-label", `Take a photo for ${idea.text}`);
+      cameraInput.dataset.memoryId = memory.id;
+      cameraInput.setAttribute("aria-label", `Take a photo for ${memory.text}`);
 
       photoActions.append(addPhotosButton, addPhotosInput, cameraButton, cameraInput);
       content.append(photoActions);
@@ -464,7 +459,7 @@ function renderIdeaList(list, entries, readOnly) {
       deleteButton.className = "delete-button";
       deleteButton.type = "button";
       deleteButton.textContent = "X";
-      deleteButton.setAttribute("aria-label", `Delete ${idea.text}`);
+      deleteButton.setAttribute("aria-label", `Delete ${memory.text}`);
 
       main.append(content);
       item.append(main, deleteButton);
@@ -480,7 +475,7 @@ function updateNetworkStatus(status) {
   offlineStatus.textContent = status || (navigator.onLine ? "Online" : "Offline");
 }
 
-async function loadCloudIdeas() {
+async function loadCloudMemories() {
   if (!user || !navigator.onLine || isSyncing) return;
   isSyncing = true;
   updateNetworkStatus("Syncing");
@@ -489,29 +484,29 @@ async function loadCloudIdeas() {
     await flushPendingChanges();
 
     let { data, error } = await supabase
-      .from("ideas")
-      .select("id,user_id,text,notes,done,is_public,updated_at,idea_photos(id,idea_id,user_id,storage_path,width,height,size_bytes,created_at)")
+      .from("memories")
+      .select("id,user_id,text,notes,is_public,updated_at,memory_photos(id,memory_id,user_id,storage_path,width,height,size_bytes,created_at)")
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false });
 
     if (error && isSetupMissing(error)) {
       showPhotoSetupMessage();
       ({ data, error } = await supabase
-        .from("ideas")
-        .select("id,user_id,text,notes,done,is_public,updated_at")
+        .from("memories")
+        .select("id,user_id,text,notes,is_public,updated_at")
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false }));
     }
 
     if (error) throw error;
 
-    const cloudIdeas = await hydratePhotoUrls((data || []).map(normalizeIdea));
-    const pendingIdeas = ideas.filter((idea) => idea.pending);
-    const merged = new Map(cloudIdeas.map((idea) => [idea.id, idea]));
-    pendingIdeas.forEach((idea) => merged.set(idea.id, idea));
+    const cloudMemories = await hydratePhotoUrls((data || []).map(normalizeMemory));
+    const pendingMemories = memories.filter((memory) => memory.pending);
+    const merged = new Map(cloudMemories.map((memory) => [memory.id, memory]));
+    pendingMemories.forEach((memory) => merged.set(memory.id, memory));
 
-    ideas = sortIdeas([...merged.values()]);
-    saveIdeas();
+    memories = sortMemories([...merged.values()]);
+    saveMemories();
     render();
     updateNetworkStatus("Synced");
   } catch (error) {
@@ -520,67 +515,66 @@ async function loadCloudIdeas() {
   } finally {
     isSyncing = false;
   }
-  await loadCommunityIdeas();
+  await loadCommunityMemories();
 }
 
-async function loadCommunityIdeas() {
+async function loadCommunityMemories() {
   if (!navigator.onLine) return;
 
   try {
     const { data, error } = await supabase
-      .from("ideas")
-      .select("id,text,notes,done,is_public,updated_at,idea_photos(id,idea_id,storage_path,width,height,size_bytes,created_at)")
+      .from("memories")
+      .select("id,text,notes,is_public,updated_at,memory_photos(id,memory_id,storage_path,width,height,size_bytes,created_at)")
       .eq("is_public", true)
       .order("updated_at", { ascending: false });
 
     if (error) throw error;
 
-    const visibleIdeas = await hydratePhotoUrls((data || []).map((row) => {
-      const idea = normalizeIdea(row);
-      idea.user_id = null;
-      return idea;
+    const visibleMemories = await hydratePhotoUrls((data || []).map((row) => {
+      const memory = normalizeMemory(row);
+      memory.user_id = null;
+      return memory;
     }));
-    communityIdeas = visibleIdeas.filter((idea) => !user || !ideas.some((ownIdea) => ownIdea.id === idea.id));
+    communityMemories = visibleMemories.filter((memory) => !user || !memories.some((ownMemory) => ownMemory.id === memory.id));
     render();
   } catch (error) {
     console.warn(error);
-    setAuthMessage(`Could not load community ideas: ${error.message}`);
+    setAuthMessage(`Could not load community memories: ${error.message}`);
   }
 }
 
 async function flushPendingChanges() {
-  const pendingIdeas = ideas.filter((idea) => idea.pending);
+  const pendingMemories = memories.filter((memory) => memory.pending);
 
-  for (const idea of pendingIdeas) {
-    await syncIdea(idea);
+  for (const memory of pendingMemories) {
+    await syncMemory(memory);
   }
 
   for (const id of [...pendingDeletes]) {
     const entry = typeof id === "string" ? { id, photos: [] } : id;
-    await deleteCloudIdea(entry.id, entry.photos || []);
+    await deleteCloudMemory(entry.id, entry.photos || []);
   }
 }
 
-async function syncIdea(idea) {
+async function syncMemory(memory) {
   if (!user || !navigator.onLine) {
-    idea.pending = true;
-    saveIdeas();
+    memory.pending = true;
+    saveMemories();
     updateNetworkStatus("Local");
     return;
   }
 
   try {
     const { error } = await supabase
-      .from("ideas")
+      .from("memories")
       .upsert(
         {
-          id: idea.id,
+          id: memory.id,
           user_id: user.id,
-          text: idea.text,
-          notes: idea.notes,
-          done: idea.done,
-          is_public: Boolean(idea.is_public),
-          updated_at: idea.updated_at
+          text: memory.text,
+          notes: memory.notes,
+          is_public: Boolean(memory.is_public),
+          updated_at: memory.updated_at
         },
         { onConflict: "id" }
       )
@@ -588,19 +582,19 @@ async function syncIdea(idea) {
 
     if (error) throw error;
 
-    idea.user_id = user.id;
-    idea.pending = false;
-    saveIdeas();
+    memory.user_id = user.id;
+    memory.pending = false;
+    saveMemories();
     updateNetworkStatus("Synced");
   } catch (error) {
     console.warn(error);
-    idea.pending = true;
-    saveIdeas();
+    memory.pending = true;
+    saveMemories();
     updateNetworkStatus("Local");
   }
 }
 
-async function deleteCloudIdea(id, photos = []) {
+async function deleteCloudMemory(id, photos = []) {
   if (!user || !navigator.onLine) {
     if (!pendingDeletes.some((entry) => (typeof entry === "string" ? entry : entry.id) === id)) {
       pendingDeletes.push({ id, photos });
@@ -612,7 +606,7 @@ async function deleteCloudIdea(id, photos = []) {
 
   try {
     const { error } = await supabase
-      .from("ideas")
+      .from("memories")
       .delete()
       .eq("id", id)
       .eq("user_id", user.id);
@@ -621,7 +615,7 @@ async function deleteCloudIdea(id, photos = []) {
 
     const paths = photos.map((photo) => photo.storage_path).filter(Boolean);
     if (paths.length > 0) {
-      const { error: storageError } = await supabase.storage.from(photoBucket).remove(paths);
+      const { error: storageError } = await supabase.storage.from(legacyPhotoBucket).remove(paths);
       if (storageError) throw storageError;
     }
 
@@ -641,7 +635,7 @@ async function deleteCloudIdea(id, photos = []) {
 async function handleSession(nextSession) {
   session = nextSession;
   user = session?.user || null;
-  ideas = loadIdeas();
+  memories = loadMemories();
   pendingDeletes = loadPendingDeletes();
   renderAuth();
   render();
@@ -649,10 +643,10 @@ async function handleSession(nextSession) {
   if (user) {
     setAuthMessage("");
     updateNetworkStatus(navigator.onLine ? "Loading" : "Offline");
-    await loadCloudIdeas();
+    await loadCloudMemories();
   } else {
     updateNetworkStatus(navigator.onLine ? "Online" : "Offline");
-    await loadCommunityIdeas();
+    await loadCommunityMemories();
   }
 }
 
@@ -691,108 +685,91 @@ async function signInWithGoogle() {
   if (error) setAuthMessage(error.message);
 }
 
-ideaForm.addEventListener("submit", async (event) => {
+memoryForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!user) {
-    setAuthMessage("Sign in before adding ideas.");
+    setAuthMessage("Sign in before adding memories.");
     return;
   }
 
-  const text = ideaInput.value.trim();
+  const text = memoryInput.value.trim();
   const notes = notesInput.value.trim();
   const photoFiles = [...selectedPhotoFiles];
   if (!text) return;
 
-  const idea = {
+  const memory = {
     id: crypto.randomUUID(),
     user_id: user.id,
     text,
     notes,
     photos: [],
-    done: false,
     updated_at: new Date().toISOString(),
     pending: true
   };
 
-  ideas.unshift(idea);
-  saveIdeas();
+  memories.unshift(memory);
+  saveMemories();
   render();
-  await syncIdea(idea);
-  await uploadPhotosForIdea(idea, photoFiles);
-  ideaInput.value = "";
+  await syncMemory(memory);
+  await uploadPhotosForMemory(memory, photoFiles);
+  memoryInput.value = "";
   notesInput.value = "";
   selectedPhotoFiles = [];
   renderSelectedPhotoPreviews();
-  ideaInput.focus();
+  memoryInput.focus();
 });
 
-ideaList.addEventListener("change", (event) => {
+memoryList.addEventListener("change", (event) => {
   const checkbox = event.target;
   if (!(checkbox instanceof HTMLInputElement)) return;
 
-  const item = checkbox.closest(".idea-item");
-  const idea = ideas.find((entry) => entry.id === item?.dataset.id);
-  if (!idea) return;
+  const item = checkbox.closest(".memory-item");
+  const memory = memories.find((entry) => entry.id === item?.dataset.id);
+  if (!memory) return;
 
   if (checkbox.classList.contains("share-toggle")) {
-    idea.is_public = checkbox.checked;
-    idea.updated_at = new Date().toISOString();
-    saveIdeas();
+    memory.is_public = checkbox.checked;
+    memory.updated_at = new Date().toISOString();
+    saveMemories();
     render();
-    syncIdea(idea).then(loadCommunityIdeas);
-    return;
+    syncMemory(memory).then(loadCommunityMemories);
   }
-
-  if (checkbox.type !== "checkbox") return;
-  idea.done = checkbox.checked;
-  idea.updated_at = new Date().toISOString();
-  saveIdeas();
-  render();
-  syncIdea(idea);
 });
 
-ideaList.addEventListener("click", (event) => {
+memoryList.addEventListener("click", (event) => {
   const button = event.target;
   if (!(button instanceof HTMLButtonElement)) return;
 
   if (button.classList.contains("remove-photo-button")) {
-    removePhoto(button.dataset.ideaId, button.dataset.photoId);
+    removePhoto(button.dataset.memoryId, button.dataset.photoId);
     return;
   }
 
-  if (button.classList.contains("idea-photo-trigger")) {
+  if (button.classList.contains("memory-photo-trigger")) {
     document.getElementById(button.dataset.target)?.click();
     return;
   }
 
   if (!button.classList.contains("delete-button")) return;
 
-  const item = button.closest(".idea-item");
+  const item = button.closest(".memory-item");
   const id = item?.dataset.id;
-  const deletedIdea = ideas.find((idea) => idea.id === id);
-  ideas = ideas.filter((idea) => idea.id !== item?.dataset.id);
-  saveIdeas();
+  const deletedMemory = memories.find((memory) => memory.id === id);
+  memories = memories.filter((memory) => memory.id !== item?.dataset.id);
+  saveMemories();
   render();
-  if (id) deleteCloudIdea(id, deletedIdea?.photos || []);
+  if (id) deleteCloudMemory(id, deletedMemory?.photos || []);
 });
 
-ideaList.addEventListener("change", async (event) => {
+memoryList.addEventListener("change", async (event) => {
   const input = event.target;
-  if (!(input instanceof HTMLInputElement) || !input.classList.contains("idea-photo-input")) return;
+  if (!(input instanceof HTMLInputElement) || !input.classList.contains("memory-photo-input")) return;
 
-  const idea = ideas.find((entry) => entry.id === input.dataset.ideaId);
-  if (!idea) return;
+  const memory = memories.find((entry) => entry.id === input.dataset.memoryId);
+  if (!memory) return;
 
-  await uploadPhotosForIdea(idea, Array.from(input.files || []));
+  await uploadPhotosForMemory(memory, Array.from(input.files || []));
   input.value = "";
-});
-
-clearDone.addEventListener("click", () => {
-  const deletedIdeas = ideas.filter((idea) => idea.done);
-  ideas = ideas.filter((idea) => !idea.done);
-  saveIdeas();
-  render();
-  deletedIdeas.forEach((idea) => deleteCloudIdea(idea.id, idea.photos || []));
 });
 
 signInButton.addEventListener("click", () => authenticate("sign-in"));
@@ -821,8 +798,8 @@ signOutButton.addEventListener("click", async () => {
 
 window.addEventListener("online", () => {
   updateNetworkStatus();
-  if (user) loadCloudIdeas();
-  else loadCommunityIdeas();
+  if (user) loadCloudMemories();
+  else loadCommunityMemories();
 });
 window.addEventListener("offline", updateNetworkStatus);
 

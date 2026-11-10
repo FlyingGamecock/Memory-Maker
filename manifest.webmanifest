@@ -1,7 +1,7 @@
 {
   "name": "Memory Maker",
   "short_name": "Memory Maker",
-  "description": "An offline-ready idea queue for planning small apps.",
+  "description": "An offline-ready place to collect and share memories.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

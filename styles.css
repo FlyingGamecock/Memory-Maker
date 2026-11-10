@@ -106,7 +106,7 @@ select:focus-visible {
 
 .topbar,
 .board-header,
-.idea-item {
+.memory-item {
   display: flex;
   align-items: center;
 }
@@ -160,7 +160,7 @@ h2 {
 }
 
 .install-button,
-.idea-form button,
+.memory-form button,
 .auth-actions button,
 .text-button {
   min-height: 42px;
@@ -169,7 +169,7 @@ h2 {
 }
 
 .install-button,
-.idea-form button,
+.memory-form button,
 .auth-actions button {
   padding: 0 18px;
   color: #fff;
@@ -261,7 +261,7 @@ h2 {
   color: var(--blue);
 }
 
-.idea-form {
+.memory-form {
   margin-bottom: 22px;
 }
 
@@ -277,7 +277,7 @@ h2 {
   font-weight: 800;
 }
 
-.idea-form-grid {
+.memory-form-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
@@ -294,9 +294,9 @@ h2 {
   font-size: 0.82rem;
 }
 
-.idea-form-grid input,
-.idea-form-grid textarea,
-.idea-form-grid select {
+.memory-form-grid input,
+.memory-form-grid textarea,
+.memory-form-grid select {
   width: 100%;
   min-height: 48px;
   padding: 0 14px;
@@ -306,7 +306,7 @@ h2 {
   background: #fff;
 }
 
-.idea-form-grid textarea {
+.memory-form-grid textarea {
   min-height: 72px;
   padding: 12px 14px;
   resize: vertical;
@@ -336,7 +336,7 @@ h2 {
 }
 
 .photo-action-row,
-.idea-photo-actions {
+.memory-photo-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
@@ -391,15 +391,15 @@ h2 {
   font-size: 0.84rem;
 }
 
-.idea-form-grid button {
+.memory-form-grid button {
   grid-column: 2;
   justify-self: end;
   align-self: end;
   min-height: 48px;
 }
 
-.idea-form-grid input:focus,
-.idea-form-grid textarea:focus {
+.memory-form-grid input:focus,
+.memory-form-grid textarea:focus {
   border-color: var(--gold);
 }
 
@@ -419,7 +419,7 @@ h2 {
   background: transparent;
 }
 
-.idea-list {
+.memory-list {
   display: grid;
   gap: 10px;
   margin: 0;
@@ -427,7 +427,7 @@ h2 {
   list-style: none;
 }
 
-.idea-item {
+.memory-item {
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
@@ -438,15 +438,11 @@ h2 {
   background: #fff;
 }
 
-.idea-main {
+.memory-main {
   min-width: 0;
   display: flex;
   align-items: flex-start;
   gap: 10px;
-}
-
-.idea-main > label {
-  flex: 0 0 auto;
 }
 
 .share-control {
@@ -474,45 +470,22 @@ h2 {
   line-height: 1.45;
 }
 
-.idea-item.read-only {
+.memory-item.read-only {
   background: #fbfcfa;
 }
 
-.idea-content {
+.memory-content {
   min-width: 0;
   flex: 1 1 auto;
 }
 
-.idea-title {
+.memory-title {
   display: block;
   font-weight: 800;
   overflow-wrap: anywhere;
 }
 
-.idea-item input {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--accent);
-}
-
-.idea-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 7px;
-}
-
-.idea-meta span,
-.idea-meta time {
-  padding: 4px 8px;
-  border-radius: 999px;
-  color: var(--accent);
-  background: rgba(21, 71, 52, 0.1);
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.idea-notes {
+.memory-notes {
   margin-top: 9px;
   color: var(--muted);
   line-height: 1.45;
@@ -552,19 +525,14 @@ h2 {
   font-weight: 900;
 }
 
-.idea-photo-actions {
+.memory-photo-actions {
   margin-top: 12px;
 }
 
-.idea-photo-actions .file-button {
+.memory-photo-actions .file-button {
   min-height: 38px;
   padding: 8px 11px;
   font-size: 0.84rem;
-}
-
-.idea-item.done .idea-title {
-  color: var(--muted);
-  text-decoration: line-through;
 }
 
 .delete-button {
@@ -596,7 +564,7 @@ h2 {
   }
 
   .topbar,
-  .idea-form-grid,
+  .memory-form-grid,
   .auth-form,
   .auth-actions,
   .profile-panel {
@@ -608,11 +576,11 @@ h2 {
     display: flex;
   }
 
-  .idea-form-grid {
+  .memory-form-grid {
     display: flex;
   }
 
-  .idea-form-grid textarea {
+  .memory-form-grid textarea {
     min-height: 92px;
   }
 

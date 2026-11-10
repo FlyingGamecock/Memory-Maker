@@ -47,22 +47,29 @@ GitHub Actions tab.
 The root `supabase-schema.sql` describes the current setup schema; future
 database changes should be made in timestamped migration files. The
 category/due-date removal migration also deletes those values from existing
-ideas.
+memories.
 
-## Public idea sharing
+## Memory schema and sharing
+
+The migration `20261110144000_rename_ideas_to_memories.sql` renames the
+existing `ideas` and `idea_photos` tables and their photo foreign key without
+discarding records or photo objects. It also removes the former `done` status.
+The legacy Storage bucket ID `idea-photos` remains in place so existing photo
+objects and paths continue to work.
 
 The migration `20261106150000_public_idea_sharing.sql` adds the `is_public`
-field and read-only policies for the community directory. Apply it to the
-linked existing project with:
+field and read-only policies for the community directory. Only memories
+explicitly marked public are visible to anonymous or authenticated visitors.
+Database policies permit visitors to read shared memories and their photos,
+but only the owner can change or delete a memory. Treat shared memory titles,
+notes, and photos as public information.
 
 ```powershell
 supabase db push --linked
 ```
 
-Only ideas explicitly marked public are visible to anonymous or authenticated
-visitors. Database policies permit visitors to read shared ideas and their
-photos, but only the owner can change or delete an idea. Treat shared idea
-titles, notes, status, and photos as public information.
+Apply the rename migration as part of the corresponding app release so the
+client and database use the same schema.
 
 ## Google sign-in redirects
 

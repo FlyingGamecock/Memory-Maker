@@ -1,4 +1,4 @@
-const cacheName = "memory-maker-pwa-v1";
+const cacheName = "memory-maker-pwa-v2";
 const appShell = [
   "./",
   "./index.html",
