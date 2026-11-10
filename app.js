@@ -121,7 +121,17 @@ function navigateToPage(requestedPage, replace = false) {
   if (replace) window.history.replaceState({}, "", url);
   else if (url.href !== window.location.href) window.history.pushState({}, "", url);
   renderPage(page);
-  if (page === "admin") loadAdminPage();
+  refreshPageContent(page);
+}
+
+function refreshPageContent(page) {
+  if (page === "memories") {
+    void loadCloudMemories();
+  } else if (page === "community") {
+    void loadCommunityMemories();
+  } else if (page === "admin") {
+    void loadAdminPage();
+  }
 }
 
 function userStorageKey() {
@@ -955,10 +965,8 @@ async function handleSession(nextSession) {
   if (user) {
     setAuthMessage("");
     updateNetworkStatus(navigator.onLine ? "Loading" : "Offline");
-    await loadCloudMemories();
   } else {
     updateNetworkStatus(navigator.onLine ? "Online" : "Offline");
-    await loadCommunityMemories();
   }
 }
 
